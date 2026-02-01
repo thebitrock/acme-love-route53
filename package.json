@@ -1,6 +1,6 @@
 {
   "name": "acme-love-route53",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AWS Route 53 DNS-01 challenge solver for acme-love — automate Let's Encrypt certificates with Route 53",
   "main": "dist/index.js",
   "type": "module",
