@@ -24,6 +24,8 @@ export interface Route53Dns01Solver {
   setDns: (preparation: ChallengePreparation) => Promise<void>;
   waitFor: (preparation: ChallengePreparation) => Promise<void>;
   cleanup: (preparation: ChallengePreparation) => Promise<void>;
+  /** Remove all TXT records created during this solver's lifetime. */
+  cleanupAll: () => Promise<void>;
 }
 
 async function findHostedZoneId(
@@ -123,6 +125,7 @@ export function createRoute53Dns01Solver(
   } = config;
 
   const r53 = config.client ?? new Route53Client({ region });
+  const preparations: ChallengePreparation[] = [];
 
   async function getZoneId(target: string): Promise<string> {
     if (config.hostedZoneId) return config.hostedZoneId;
@@ -130,6 +133,7 @@ export function createRoute53Dns01Solver(
   }
 
   const setDns = async (preparation: ChallengePreparation): Promise<void> => {
+    preparations.push(preparation);
     const zoneId = await getZoneId(preparation.target);
     const changeId = await changeRecordSet(
       r53,
@@ -175,5 +179,12 @@ export function createRoute53Dns01Solver(
     );
   };
 
-  return { setDns, waitFor, cleanup };
+  const cleanupAll = async (): Promise<void> => {
+    for (const p of preparations) {
+      await cleanup(p);
+    }
+    preparations.length = 0;
+  };
+
+  return { setDns, waitFor, cleanup, cleanupAll };
 }
